@@ -26,7 +26,7 @@ S(id="S00", orig="新增", phase="P0", gate="G0",
   own="ARC、ENG、SYS、NET、DR、AUTO", dur="", ponr=False,
   items=[
     I("PRE", "vRA 確切版本 ≥ 8.18.1（converge 情境頁要求 8.18.1 Patch 3，建議以 P3 為基準）", "vRA 主節點：vracli version", "≥ 8.18.1 P3", "TechDocs: Import an Existing VMware Aria Automation Instance；Converge … Aria Automation 情境頁", "AUTO", "vRA ≥ 8.18.1（建議 P3+）"),
-    I("PRE", "vRO 實際版本（「8.18.7」在 Broadcom 查無此 Orchestrator 版號，需現場確認）且 ≥ 8.18.1", "vRO：vracli version", "≥ 8.18.1", "TechDocs: Upgrade to VCF Operations Orchestrator 9.1", "AUTO", "vRO 實際版本（8.18.7 查無）"),
+    I("PRE", "Aria Operations 8.18.7 拓樸：叢集節點（primary / replica / data）、remote collector / cloud proxy、管理套件、自訂內容；是否由 Aria Suite Lifecycle 管理", "Aria Ops /admin > System Status", "已記錄", "TechDocs: Upgrading to VCF Operations 9.1", "ARC", "Aria Ops 8.18.7 節點 / cloud proxy / 自訂內容"),
     I("PRE", "vIDM / Aria Suite Lifecycle 的版本與所在叢集（vIDM 升級後仍是 VCFA 9.1 驗證來源，不可刪）", "vSphere Client inventory", "已記錄", "TechDocs: Upgrading to VCF Automation 9.1", "AUTO", "vIDM / ASL 版本與位置"),
     I("PRE", "整合雲 / 中信雲 vCenter、ESXi 8.0.3 確切 build：8.0U3j 不可升 9.1.0、可升 9.1.1；8.0U3k 須另查 Interop Matrix（back-in-time）", "VAMI Summary；esxcli system version get", "目標 9.1.1 可行", "KB 450972；TechDocs: Upgrading to VCF 9.1.x", "SYS", "8.0.3 確切 build（back-in-time，KB 450972）"),
     I("PRE", "三套 vCenter 皆無 Enhanced Linked Mode（客戶 2026-10-07 已確認）；另確認無 vCenter HA（converge 與 import 都不支援）", "vSphere Client > vCenter > Configure > vCenter HA", "無 ELM ✔、無 VCHA", "TechDocs: Supported and Not Supported Configurations；Import an Existing vCenter", "SYS", "無 ELM ✔（10/7 已確認）；確認無 VCHA"),
@@ -44,28 +44,48 @@ S(id="S00", orig="新增", phase="P0", gate="G0",
 
 # ---------------------------------------------------------------- S01
 S(id="S01", orig="#1", phase="P1", gate="",
-  en="Cold-migrate vRA / vRO into the Management Cluster", zh="vRA / vRO 冷遷移至 Management Cluster",
+  en="Cold-migrate vRA & Aria Operations into the Management Cluster", zh="vRA、Aria Operations 冷遷移至 Management Cluster",
   own="ENG、SYS、AUTO、NET", dur="Lab：165 GB 冷遷移約 97 分 / VM（nested）", ponr=False,
   items=[
-    I("PRE", "Management Cluster 提供與 vRA / vRO 現行『同一 L2 網段』的 port group（IP / FQDN 不變；VCFA 9.1 新節點也必須部署在同網段）", "VDS > Port groups", "VLAN / subnet 相同", "TechDocs: Upgrading to VCF Automation 9.1（same network）；Import an Existing VMware Aria Automation Instance", "NET", "目標 port group 與 vRA 同一 L2 網段"),
-    I("PRE", "順序：CXS Lab 驗證的是管理網域建好後再搬（Converge → 搬 vRA → Import）；先搬再 Converge 亦可，但未經 Lab 驗證", "", "已決定", "CXS Lab 實測", "ARC", "Lab 驗證順序：Converge 後再搬"),
+    I("PRE", "Management Cluster 提供與 vRA、Aria Operations 現行『同一 L2 網段』的 port group（IP / FQDN 不變；VCFA 9.1 新節點也必須部署在同網段）", "VDS > Port groups", "VLAN / subnet 相同", "TechDocs: Upgrading to VCF Automation 9.1（same network）；Import an Existing VMware Aria Automation Instance", "NET", "目標 port group 與 vRA 同一 L2 網段"),
+    I("PRE", "順序：Aria Ops 必須先搬（9.1.1 起 VCF Operations 須在第一個 Instance 的管理網域，Converge 時沿用它）；vRA CXS Lab 驗證的是 Converge 後才搬，先搬亦可", "", "已決定", "CXS Lab 實測", "ARC", "Aria Ops 先搬（VCF Ops 須在管理網域）"),
     I("PRE", "熱 vMotion 不採用：vDS 8.0.3 ↔ 9.1 不同版本間 vMotion 不支援；CXS Lab 熱遷移亦因 CPU feature 失敗 → 排停機窗口冷遷移", "", "已排窗口", "KB 318582；CXS Lab 實測", "ARC", "vDS 版本不同 → 冷遷移（KB 318582）"),
     I("PRE", "兩端 vCenter 443、ESXi 902（NFC）互通；目的 datastore 容量足夠", "Test-NetConnection / nc -zv", "可連通", "TechDocs: Import or Clone a VM with Advanced Cross vCenter vMotion", "NET", None),
     I("PRE", "記錄各節點 vApp properties / OVF 環境（vApp options 遺失會讓 vRA 服務起不來）", "VM > Configure > vApp Options（匯出截圖 / OVF）", "已備份", "KB 447218", "ENG", "備份 vApp properties（KB 447218）"),
-    I("PRE", "健康基準：vracli status、pods 全 Running；凍結 vRA 請求與 vRO 排程工作流程", "kubectl get pods -n prelude", "全 Running", "CXS Lab 實測", "AUTO", "健康基準 + 凍結請求 / 排程"),
+    I("PRE", "健康基準：vracli status、pods 全 Running；凍結 vRA 請求與 Aria Ops 設定變更", "kubectl get pods -n prelude", "全 Running", "CXS Lab 實測", "AUTO", "健康基準 + 凍結請求 / 排程"),
     I("EXE", "vRA 正常停止服務後關機", "主節點：/opt/scripts/deploy.sh --shutdown → Guest shutdown 各節點", "所有節點 Powered off", "TechDocs: Aria Automation 8.18 Start / Shut down", "ENG", "deploy.sh --shutdown → 關機"),
-    I("EXE", "vRO 正常關機；確認各 VM CD/DVD 未掛 datastore ISO", "Guest shutdown；Edit Settings > CD/DVD", "Powered off、未掛 ISO", "CXS Lab 實測", "ENG", None),
-    I("EXE", "Advanced Cross vCenter vMotion（關機狀態）：選 mgmt cluster / datastore / 同網段 port group；可選 Clone 方式保留來源（來源保持關機）作為退版點", "vSphere Client（目的 vCenter）> Import VMs；或 PowerCLI Move-VM", "遷移成功", "TechDocs: Import or Clone a VM with Advanced Cross vCenter vMotion", "ENG", "XVM 冷遷移（可 Clone 保留來源）"),
-    I("EXE", "依相依性開機（vRO → vRA 全部節點），vRA 主節點啟動服務", "/opt/scripts/deploy.sh", "服務啟動", "TechDocs: Aria Automation 8.18 Start / Shut down", "ENG", "開機 → deploy.sh 啟動服務"),
+    I("EXE", "Aria Operations：/admin 先 Take Cluster Offline，再 Guest shutdown 各節點（含 cloud proxy）；確認各 VM CD/DVD 未掛 datastore ISO", "Aria Ops /admin > System Status > Take Cluster Offline", "Offline → Powered off", "TechDocs: Create Snapshots of the VCF Operations Nodes Before You Upgrade；CXS Lab 實測", "ENG", "Aria Ops：Take Cluster Offline → 關機"),
+    I("EXE", "Advanced Cross vCenter vMotion（關機狀態）：選 mgmt cluster / datastore / 同網段 port group；可選 Clone 方式保留來源（來源保持關機）作為退版點", "vSphere Client（目的 vCenter）> Import VMs；或 PowerCLI Move-VM", "遷移成功", "TechDocs: Import or Clone a VM with Advanced Cross vCenter vMotion", "ENG", "XVM 冷遷移 vRA + Aria Ops（可 Clone 留來源）"),
+    I("EXE", "開機：vRA 全部節點開機後主節點執行 deploy.sh；Aria Ops 開機後 /admin Bring Cluster Online", "/opt/scripts/deploy.sh；Aria Ops /admin > Bring Online", "服務啟動 / Online", "TechDocs: Aria Automation 8.18 Start / Shut down", "ENG", "開機 → deploy.sh；Ops Bring Online"),
     I("VER", "IP / FQDN / vApp properties 不變（ovfEnv 存在）", "cat /opt/vmware/etc/vami/ovfEnv.xml", "與遷移前一致", "KB 447218", "ENG", None),
     I("VER", "服務就緒：healthstatus 回 200、pods 全 Running（約 10–20 分）", "curl -k https://<vra-fqdn>/vco/api/healthstatus", "HTTP 200", "CXS Lab 實測", "ENG", "healthstatus 200、pods Running"),
-    I("VER", "vIDM 登入、cloud account data collection、既有部署 Day-2（Power off/on）、新 catalog 請求、vRO workflow 測試", "Cloud Assembly / Service Broker / vRO Client", "全部成功", "CXS Lab 實測", "AUTO", "登入 / data collection / Day-2 / workflow"),
+    I("VER", "vIDM 登入、cloud account data collection、既有部署 Day-2（Power off/on）、新 catalog 請求；Aria Ops 叢集 Online、adapter 持續收集", "Cloud Assembly / Service Broker；Aria Ops /admin", "全部成功", "CXS Lab 實測", "AUTO", "vRA Day-2 正常；Aria Ops Online 收集正常"),
     I("RB", "反向冷遷移回中信雲；或刪除新 VM、開回 Clone 保留的來源", "", "回到遷移前狀態", "", "ENG", "反向冷遷移 / 開回保留來源"),
-    I("RB", "截止點：S05 Import 之前", "", "", "", "", "截止：S05 Import 前"),
+    I("RB", "截止點：S06 Import 之前", "", "", "", "", "截止：S06 Import 前"),
   ])
 
 # ---------------------------------------------------------------- S02
-S(id="S02", orig="#3", phase="P1", gate="",
+S(id="S02", orig="#2", phase="P1", gate="",
+  en="Upgrade Aria Operations 8.18.7 to VCF Operations 9.1.1", zh="Aria Operations 8.18.7 → VCF Operations 9.1.1（in-place PAK）",
+  own="ENG、ARC", dur="Lab：8.18.6 → 9.1.1 單節點約 23 分；nested vSAN 約 48 分", ponr=False,
+  items=[
+    I("PRE", "已位於 Management Cluster（S01）；9.1.1 起 VCF Operations 須在第一個 VCF Instance 的管理網域，S05 Converge 會沿用這套", "", "已搬入", "TechDocs: Deploy Components by Using VCF Installer…", "ARC", "已在 Mgmt Cluster（S05 沿用）"),
+    I("PRE", "8.x → 9.1 只能用 PAK 升級；來源 Aria Operations 8.18.x", "", "8.18.7 確認", "TechDocs: Perform the Upgrade to VCF Operations 9.1", "ARC", "8.18.x → 9.1：只能 PAK"),
+    I("PRE", "所有 vCenter integration 的 vCenter 欄位不可是 URL、不可含斜線或子路徑", "VCF Ops > Integrations > vCenter", "皆為 FQDN", "TechDocs: Perform the Upgrade to VCF Operations 9.1", "ENG", "vCenter integration 欄位只填 FQDN"),
+    I("PRE", "VCF Ops 憑證 SAN 含所有節點 FQDN 與 VIP / LB FQDN；有 SSL termination proxy 設定須先移除", "openssl s_client -connect <ops>:443", "SAN 完整", "TechDocs: Perform the Upgrade to VCF Operations 9.1", "ENG", "憑證 SAN 含節點 + VIP"),
+    I("PRE", "備份自訂內容（dashboards、views、reports、super metrics、policies）；建議先跑 pre-upgrade assessment（9.1 移除部分 metric，自訂內容可能受影響）", "VCF Ops > Content Management > Export", "已匯出", "TechDocs: Back up Customized Content in VCF Operations Before an Upgrade；CXS Lab 實測", "ENG", "匯出自訂內容 + assessment"),
+    I("PRE", "Take Cluster Offline → 每個節點 snapshot（不含 memory、不 quiesce）→ Bring Online", "/admin > Take Cluster Offline；vSphere Client > Take Snapshot", "全部節點有 snapshot", "TechDocs: Create Snapshots of the VCF Operations Nodes Before You Upgrade", "ENG", "Offline → 全節點 snapshot（無 memory）"),
+    I("EXE", "/admin > Software Update > Install a Software Update → 上傳 9.1.1 PAK → EULA → Install（叢集重啟、登出）", "https://<primary>/admin", "Install 開始", "TechDocs: Perform the Upgrade to VCF Operations 9.1", "ENG", "/admin Software Update 上傳 PAK → Install"),
+    I("EXE", "升級會先升叢集節點，再自動升 cloud proxy；重新登入 Software Update 追進度", "/admin > Software Update", "", "TechDocs: Perform the Upgrade to VCF Operations 9.1", "ENG", None),
+    I("VER", "叢集 Online、節點 Running；以 analytics 能回應資源查詢為完成判準（版本 API 會提早顯示 9.1.1）", "GET /suite-api/api/resources", "HTTP 200、版本 9.1.1", "CXS Lab 實測", "ENG", "叢集真正 Online（不要只看版本號）"),
+    I("VER", "adapters 持續收集、dashboards / alerts 正常、cloud proxy 9.1.1 Connected", "VCF Ops UI", "正常", "", "ENG", "adapter / dashboard / cloud proxy 正常"),
+    I("VER", "若原由 Aria Suite Lifecycle 管理：升級後從 ASL 環境移除 VCF Operations（不刪 VM）；保留 ASL 8.x 管 vIDM", "ASL > Environments > Delete Product", "已移除", "TechDocs: Upgrading to VCF Operations 9.1", "AUTO", "從 ASL 移除 Ops（不刪 VM）"),
+    I("RB", "Take Cluster Offline → 全部節點 revert snapshot → Bring Online", "", "回到 8.18.7", "TechDocs: Create Snapshots of the VCF Operations Nodes Before You Upgrade", "ENG", "全節點 revert snapshot"),
+    I("RB", "截止點：S05 Converge 併入（Join existing operations appliance）之前；觀察後刪 snapshot", "", "", "", "PM", "截止：S05 Converge 前"),
+  ])
+
+# ---------------------------------------------------------------- S03
+S(id="S03", orig="#3", phase="P1", gate="",
   en="Deploy VCF Installer 9.1.1", zh="部署 VCF Installer 9.1.1",
   own="ENG", dur="", ponr=False,
   items=[
@@ -77,8 +97,8 @@ S(id="S02", orig="#3", phase="P1", gate="",
     I("RB", "刪除 Installer VM（不影響既有環境）", "", "", "", "ENG", "刪除 VM 即可（無影響）"),
   ])
 
-# ---------------------------------------------------------------- S03
-S(id="S03", orig="#4", phase="P1", gate="",
+# ---------------------------------------------------------------- S04
+S(id="S04", orig="#4", phase="P1", gate="",
   en="Software Depot & Binaries", zh="Depot 與 Binaries（回答「Offline Depot???」）",
   own="ENG、NET", dur="", ponr=False,
   items=[
@@ -90,14 +110,14 @@ S(id="S03", orig="#4", phase="P1", gate="",
     I("EXE", "下載 vRA 升級用：VCF Automation 9.1.1 + Migration service engine 9.1.1", "vcf-download-tool binaries download …", "下載完成", "TechDocs: Upgrading to VCF Automation 9.1", "ENG", "VCFA 9.1.1 + Migration service engine"),
     I("EXE", "下載 WLD 升級用：vCenter / ESX 9.1.1（--type UPGRADE、esx download）；若走方案 A，另需與 vCenter 版本對應的 NSX install bundle", "vcf-download-tool …", "下載完成", "TechDocs: Import an Existing vCenter；Upgrading Workload Domains", "ENG", "WLD：vCenter / ESX 9.1.1（方案 A 加 NSX）"),
     I("EXE", "WLD ESXi 升級要 ESX 9.1.1 vLCM depot zip（catalog 只列 ISO；depot zip 下載需把 token 放在 URL path）", "https://dl.broadcom.com/<TOKEN>/PROD/COMP/ESX_HOST/<檔名>", "depot zip 已入 depot", "CXS Lab 實測", "ENG", "ESX 9.1.1 depot zip（不是 ISO）"),
-    I("EXE", "另行準備 vRO 9.1.1 升級 ISO（S15 使用）", "", "已取得", "TechDocs: Upgrade to VCF Operations Orchestrator 9.1", "AUTO", None),
+    I("EXE", "從 Broadcom Support Portal 下載 VCF Operations 9.1.1 upgrade PAK（S02 使用，不經 depot）", "Support Portal > VCF 9 > 9.1.1.0 > VCF Operations", "PAK 已取得、SHA256 相符", "TechDocs: Perform the Upgrade to VCF Operations 9.1", "ENG", "VCF Ops 9.1.1 upgrade PAK（Support Portal）"),
     I("EXE", "Installer 連線 Offline Depot（CXS Lab：URL 用 FQDN 曾報 VMWARE_DEPOT_OFFLINE_INVALID_URL，改用 IP）", "Installer > Depot Settings", "Connected", "CXS Lab 實測", "ENG", "Installer 連 depot（Lab：URL 用 IP）"),
     I("VER", "Installer Binary Management 所需項目全部 Downloaded、無缺項；檔案 SHA256 / 大小核對", "Installer > Binary Management", "全部 Downloaded", "", "ENG", "Binary Management 全部 Downloaded"),
     I("RB", "無變更（不影響既有環境）", "", "", "", "", "無變更"),
   ])
 
-# ---------------------------------------------------------------- S04
-S(id="S04", orig="#5", phase="P1", gate="G1",
+# ---------------------------------------------------------------- S05
+S(id="S05", orig="#5", phase="P1", gate="G1",
   en="Converge Management Cluster to VCF 9.1.1", zh="Management Cluster Converge 成 VCF 9.1.1 管理網域",
   own="ARC、ENG、SYS、NET", dur="Lab：約 5–5.5 h（nested）", ponr=True,
   items=[
@@ -107,11 +127,11 @@ S(id="S04", orig="#5", phase="P1", gate="G1",
     I("PRE", "vCenter 無殘留 com.vmware.sddcManager / com.vmware.vcf.client extension，無同名 SDDC Manager VM", "govc extension.info | grep -iE 'sddcmanager|vcf.client'", "無輸出", "CXS Lab 實測", "ENG", None),
     I("PRE", "vLCM remediation policy evacuate_offline_vms = true（CXS Lab 驗證會擋）", "PUT /api/esx/settings/clusters/{id}/policies/apply", "true", "CXS Lab 實測", "ENG", "vLCM evacuate_offline_vms = true"),
     I("PRE", "NSX overlay 設計：不給 TEP，或 overlay over management（mgmt VLAN 端到端 MTU ≥ 1600）；不含 NSX Edge cluster", "", "已決策", "TechDocs: Supported and Not Supported Configurations；CXS Lab 實測", "ARC", "Overlay：無 TEP 或 over mgmt（MTU ≥ 1600）"),
-    I("PRE", "VCF Operations：9.1.1 起必須在第一個 Instance 的管理網域；決定新部署或沿用既有 9.1 實例", "", "已決策", "TechDocs: Deploy Components by Using VCF Installer…", "ARC", None),
-    I("PRE", "VCF Automation 選『稍後部署』（vRA 走 S05 import）；mgmt vCenter file-based backup", "", "", "CXS Lab 實測", "ENG", "VCFA 選「稍後」，留給 vRA import"),
-    I("EXE", "Installer > Deployment Wizard > VMware Cloud Foundation > Plan Step 1『Existing Component』勾既有 vCenter（跳過 Plan 會變 greenfield）", "Installer UI", "", "CXS Lab 實測", "ENG", "Plan 勾 Existing Component（不可跳過）"),
+    I("PRE", "沿用 S02 升好的 VCF Operations 9.1.1（9.1.1 起必須在第一個 Instance 的管理網域）；Brownfield 驗證：Ops 不能已被其他 VSP 註冊、不能已綁別的 License Server", "", "符合", "TechDocs: Deploy Components by Using VCF Installer…；CXS Lab 實測", "ARC", "沿用既有 VCF Ops 9.1.1（S02）"),
+    I("PRE", "VCF Automation 選『稍後部署』（vRA 走 S06 import）；mgmt vCenter file-based backup", "", "", "CXS Lab 實測", "ENG", "VCFA 選「稍後」，留給 vRA import"),
+    I("EXE", "Installer > Deployment Wizard > VMware Cloud Foundation > Plan Step 1『Existing Component』勾「I have an existing VCF Operations 9.1 instance」（既有 vCenter 會自動勾選並鎖定；跳過 Plan 會變 greenfield）；VCF Automation 勾「稍後」", "Installer UI", "", "CXS Lab 實測", "ENG", "Plan 勾 existing VCF Ops 9.1（vCenter 自動鎖定）"),
     I("EXE", "Prepare（VCF Mgmt Services IP pool 等）→ Validate（Warning 逐條確認）→ Deploy；下載 JSON spec 存檔", "Installer UI > Review > Download JSON spec", "Validation 無 Error", "", "ENG", "Validate → Deploy；JSON spec 存檔"),
-    I("EXE", "監看里程碑：Convert vCenter → NSX → VCF Management Platform → VCF Operations → Management Services", "Installer UI / GET /v1/sddcs/{id}", "", "CXS Lab 實測", "ENG", None),
+    I("EXE", "監看里程碑：Deploy SDDC Manager → Convert vCenter → NSX → VCF Management Platform → Join the existing operations appliance", "Installer UI / GET /v1/sddcs/{id}", "", "CXS Lab 實測", "ENG", None),
     I("VER", "全部 subtask COMPLETED_WITH_SUCCESS；SDDC Manager 管理網域 ACTIVE", "SDDC Manager UI / GET /v1/domains", "ACTIVE", "", "ENG", "全部 subtask 成功、Domain ACTIVE"),
     I("VER", "NSX：hosts Prepared / Up；VCF Operations > Lifecycle 看得到 Instance 與各元件", "NSX UI > Fabric > Hosts；VCF Ops > Build > Lifecycle", "全部正常", "", "ENG", "NSX hosts Up、VCF Ops 看得到 fleet"),
     I("VER", "授權（License Server / VCF Ops）完成；SDDC Manager / NSX SFTP 備份設定並完成第一次備份", "", "授權有效、備份成功", "", "SYS", "授權 + 第一次 SFTP 備份"),
@@ -119,8 +139,8 @@ S(id="S04", orig="#5", phase="P1", gate="G1",
     I("RB", "成功後無官方反向程序 → G1 PONR，需客戶簽核後才進下一步", "", "", "", "PM", "⚠ 成功後不可逆（PONR）"),
   ])
 
-# ---------------------------------------------------------------- S05
-S(id="S05", orig="#6", phase="P1", gate="",
+# ---------------------------------------------------------------- S06
+S(id="S06", orig="#6", phase="P1", gate="",
   en="Import vRA into VCF Operations", zh="vRA 匯入 VCF Operations（Fleet Lifecycle）",
   own="ENG、AUTO", dur="Lab 9.1.1：約 5 分", ponr=False,
   items=[
@@ -134,8 +154,8 @@ S(id="S05", orig="#6", phase="P1", gate="",
     I("RB", "Import 只是註冊、來源不變；需撤除時依 KB 441333 cleanup（CXS Lab 9.1.1 實測移除後可再匯入）", "", "", "KB 441333；CXS Lab 實測", "ENG", "只是註冊；撤除走 KB 441333"),
   ])
 
-# ---------------------------------------------------------------- S06
-S(id="S06", orig="#7", phase="P1", gate="G2",
+# ---------------------------------------------------------------- S07
+S(id="S07", orig="#7", phase="P1", gate="G2",
   en="Upgrade vRA 8.18 to VCF Automation 9.1.1", zh="vRA 8.18 → VCF Automation 9.1.1（藍綠升級）",
   own="ENG、AUTO、ARC", dur="Lab 9.1.1（10/7）：precheck 36 分、升級 4 h 47 m、vRA 中斷約 44 分", ponr=False,
   items=[
@@ -160,7 +180,7 @@ S(id="S06", orig="#7", phase="P1", gate="G2",
     I("RB", "截止點：刪除 8.18 來源 VM 與 snapshot（觀察期後）", "", "", "", "PM", "⚠ 截止：刪除 8.18 來源"),
   ])
 
-# ---------------------------------------------------------------- S07
+# ---------------------------------------------------------------- S08
 def wld_vc(sid, orig, phase, site):
     S(id=sid, orig=orig, phase=phase, gate="",
       en=f"{site} vCenter 8.0.3 to 9.1.1 (RDU)", zh=f"{site} vCenter 8.0.3 → 9.1.1（RDU，import 前）",
@@ -225,30 +245,14 @@ def wld_esx(sid, orig, phase, site):
         I("RB", "單台 Shift+R 回 altbootbank（vLCM image 一致性影響屬推定，需 Lab 驗證）；vSAN format 升級後不可退", "", "", "KB 316592", "SYS", "單台 Shift+R（KB 316592）"),
       ])
 
-wld_vc("S07", "#10（vCenter）", "P2", "整合雲")
-wld_srm("S08", "#11", "P2", "整合雲")
-wld_import("S09", "#8", "P2", "整合雲", "G3")
-wld_esx("S10", "#10（ESXi）", "P2", "整合雲")
-wld_vc("S11", "#12（vCenter）", "P3", "中信雲")
-wld_srm("S12", "#13", "P3", "中信雲")
-wld_import("S13", "#9", "P3", "中信雲", "G4")
-wld_esx("S14", "#12（ESXi）", "P3", "中信雲")
-
-# ---------------------------------------------------------------- S15
-S(id="S15", orig="#2（移到最後）", phase="P4", gate="",
-  en="Upgrade vRO to VCF Operations orchestrator 9.1.1", zh="vRO → VCF Operations orchestrator 9.1.1（VCFA 之後）",
-  own="AUTO、ENG", dur="", ponr=False,
-  items=[
-    I("PRE", "順序：VCFA 9.1.1 完成後才升 external vRO（官方明文）；並建議在兩朵雲 vCenter 都 9.1.1 之後（Interop：vRO 9.1.1 對 vCenter 8.0U3 標示 Not Supported）", "", "順序確認", "TechDocs: Configure VCF Operations Orchestrator for VCF Automation VM Apps Organizations；Interop Matrix", "ARC", "VCFA 之後、兩朵雲 vCenter 9.1.1 之後"),
-    I("PRE", "來源 ≥ 8.18.1；9.1.1 ISO 備妥", "vracli version", "", "TechDocs: Upgrade to VCF Operations Orchestrator 9.1", "AUTO", None),
-    I("PRE", "匯出自訂 packages / workflows / configurations；記錄 plugin 與 endpoints", "vRO Client > Packages > Export", "已匯出", "", "AUTO", "匯出 packages / 記錄 endpoints"),
-    I("PRE", "關機 snapshot（不支援含 memory 的 snapshot）", "", "", "TechDocs: Upgrade to VCF Operations Orchestrator 9.1", "ENG", "Snapshot 不含 memory"),
-    I("PRE", "vSphere authentication：需當初註冊 SSO 的帳號憑證（以環境變數 / 保管工具提供，不落地明文）", "", "", "TechDocs: Upgrade to VCF Operations Orchestrator 9.1", "AUTO", None),
-    I("EXE", "掛載 9.1.1 ISO → 執行升級", "vracli upgrade exec -y --repo cdrom://", "Upgrade completed", "TechDocs: Upgrade to VCF Operations Orchestrator 9.1", "ENG", "vracli upgrade exec -y --repo cdrom://"),
-    I("EXE", "需整合 VCFA VM Apps organization 時，驗證改指向 VCFA", "vracli vro authentication set -p tm … --tenant <org>", "", "TechDocs: Configure VCF Operations Orchestrator for VCF Automation VM Apps Organizations", "AUTO", "驗證改指向 VCFA（-p tm）"),
-    I("VER", "版本 9.1.1；Control Center 正常；關鍵 workflow 執行成功；VCFA 呼叫 vRO 正常", "", "全部正常", "", "AUTO", "版本 / workflow / VCFA 整合正常"),
-    I("RB", "Revert 升級前 snapshot", "", "", "", "ENG", "Revert snapshot"),
-  ])
+wld_vc("S08", "#10（vCenter）", "P2", "整合雲")
+wld_srm("S09", "#11", "P2", "整合雲")
+wld_import("S10", "#8", "P2", "整合雲", "G3")
+wld_esx("S11", "#10（ESXi）", "P2", "整合雲")
+wld_vc("S12", "#12（vCenter）", "P3", "中信雲")
+wld_srm("S13", "#13", "P3", "中信雲")
+wld_import("S14", "#9", "P3", "中信雲", "G4")
+wld_esx("S15", "#12（ESXi）", "P3", "中信雲")
 
 # ---------------------------------------------------------------- S16
 S(id="S16", orig="新增", phase="P4", gate="G5",
@@ -267,40 +271,40 @@ STEP_BY_ID = {s["id"]: s for s in STEPS}
 
 # ---------------------------------------------------------------- original plan review
 ORIG_REVIEW = [
-    ("1", "vMotion vRO、vRA to Management Cluster", "調整", "改為冷遷移；目標 port group 與 vRA 同一 L2 網段（IP / FQDN 不變）", "KB 318582；Import Aria Automation 前置", "S01"),
-    ("2", "Upgrade vRO to 9.1.1", "移到最後", "external vRO 必須在 vRA → VCFA 之後升；vRO 9.1.1 不支援 vRA 8.18 與 vCenter 8.0U3", "Configure VCF Ops Orchestrator…；Interop Matrix", "S15"),
-    ("3", "Deploy VCF Installer 9.1.1", "照做", "全新 Installer、版本 ≥ 9.1.1", "Converge 部署頁", "S02"),
-    ("4", "Offline Depot???", "建議架", "非必要（可 Manual Transfer），但 Installer 內 binaries 不會轉移，後續 VCFA / WLD 升級還要用", "Downloading Binaries to VCF Installer", "S03"),
-    ("5", "Converge Management Cluster to VCF 9.1.1", "照做", "先過支援組態檢查；成功後不可逆（PONR）", "Supported / Not Supported Configurations", "S04"),
-    ("6", "Import vRA to VCF", "照做", "前提：vRA 已在管理網域（Step 1）", "Import Aria Automation in VCF Ops", "S05"),
-    ("7", "Upgrade vRA to 9.1.1", "照做", "KB 425489 腳本；5 IP + runtime FQDN 同網段", "Upgrading to VCF Automation 9.1", "S06"),
-    ("8", "Import 整合雲", "調整", "import 8.0.3 會自建 3-node NSX 4.2；建議先升 vCenter 再 import、共用管理網域 NSX", "Import an Existing vCenter", "S09"),
-    ("9", "Import 中信雲", "調整", "同上", "Import an Existing vCenter", "S13"),
-    ("10", "Upgrade 整合雲 to 9.1.1", "拆兩段", "vCenter 在 import 前以 RDU 升；ESXi 在 import 後走 VCF LCM", "Import 頁；WLD 升級頁", "S07 + S10"),
-    ("11", "SRM 重新註冊（整合雲）", "照做", "兩站 VAMI Reconfigure + Site Pair Reconnect", "KB 446701", "S08"),
-    ("12", "Upgrade 中信雲 to 9.1.1", "拆兩段", "同 10", "Import 頁；WLD 升級頁", "S11 + S14"),
-    ("13", "SRM 重新註冊（中信雲）", "照做", "同 11；每次 vCenter 升級後兩站都要做", "KB 446701", "S12"),
+    ("1", "vMotion vRO（= Aria Operations）、vRA to Management Cluster", "調整", "改為冷遷移；目標 port group 與現行同一 L2（IP / FQDN 不變）；Aria Ops 先 Take Cluster Offline", "KB 318582；Import Aria Automation 前置", "S01"),
+    ("2", "Upgrade vRO（= Aria Operations 8.18.7）to 9.1.1", "照做", "in-place PAK 升到 VCF Operations 9.1.1；9.1.1 起 VCF Ops 須在管理網域，S05 Converge 沿用這套", "Upgrading to VCF Operations 9.1", "S02"),
+    ("3", "Deploy VCF Installer 9.1.1", "照做", "全新 Installer、版本 ≥ 9.1.1", "Converge 部署頁", "S03"),
+    ("4", "Offline Depot???", "建議架", "非必要（可 Manual Transfer），但 Installer 內 binaries 不會轉移，後續 VCFA / WLD 升級還要用", "Downloading Binaries to VCF Installer", "S04"),
+    ("5", "Converge Management Cluster to VCF 9.1.1", "照做", "先過支援組態檢查；成功後不可逆（PONR）", "Supported / Not Supported Configurations", "S05"),
+    ("6", "Import vRA to VCF", "照做", "前提：vRA 已在管理網域（Step 1）", "Import Aria Automation in VCF Ops", "S06"),
+    ("7", "Upgrade vRA to 9.1.1", "照做", "KB 425489 腳本；5 IP + runtime FQDN 同網段", "Upgrading to VCF Automation 9.1", "S07"),
+    ("8", "Import 整合雲", "調整", "import 8.0.3 會自建 3-node NSX 4.2；建議先升 vCenter 再 import、共用管理網域 NSX", "Import an Existing vCenter", "S10"),
+    ("9", "Import 中信雲", "調整", "同上", "Import an Existing vCenter", "S14"),
+    ("10", "Upgrade 整合雲 to 9.1.1", "拆兩段", "vCenter 在 import 前以 RDU 升；ESXi 在 import 後走 VCF LCM", "Import 頁；WLD 升級頁", "S08 + S11"),
+    ("11", "SRM 重新註冊（整合雲）", "照做", "兩站 VAMI Reconfigure + Site Pair Reconnect", "KB 446701", "S09"),
+    ("12", "Upgrade 中信雲 to 9.1.1", "拆兩段", "同 10", "Import 頁；WLD 升級頁", "S12 + S15"),
+    ("13", "SRM 重新註冊（中信雲）", "照做", "同 11；每次 vCenter 升級後兩站都要做", "KB 446701", "S13"),
 ]
 
 GATES = [
     ("G0", "S00 後", "盤點與備份", "阻礙項清零、三套 vCenter 備份可還原、IP/DNS 驗證完成", "PM、ARC", False),
-    ("G1", "S04 後", "Converge 完成", "管理網域 ACTIVE、NSX / VCF Ops 正常、第一次 SFTP 備份成功", "PM、ARC", True),
-    ("G2", "S06 後", "VCFA 9.1.1 cutover", "Tenant / Provider 登入、資料完整、Day-2 成功；8.18 來源保留至觀察期後", "PM、AUTO", False),
-    ("G3", "S09", "整合雲 import", "vCenter 9.1.1 正常、SRM Test Recovery 成功、Compute Manager 已註冊", "PM、ARC、DR", True),
-    ("G4", "S13", "中信雲 import", "同 G3", "PM、ARC、DR", True),
+    ("G1", "S05 後", "Converge 完成", "管理網域 ACTIVE、NSX / VCF Ops 正常、第一次 SFTP 備份成功", "PM、ARC", True),
+    ("G2", "S07 後", "VCFA 9.1.1 cutover", "Tenant / Provider 登入、資料完整、Day-2 成功；8.18 來源保留至觀察期後", "PM、AUTO", False),
+    ("G3", "S10", "整合雲 import", "vCenter 9.1.1 正常、SRM Test Recovery 成功、Compute Manager 已註冊", "PM、ARC、DR", True),
+    ("G4", "S14", "中信雲 import", "同 G3", "PM、ARC、DR", True),
     ("G5", "S16", "vSAN on-disk format", "觀察期無重大事件、客戶簽核", "PM", True),
 ]
 
 OPEN_ITEMS = [
     ("vRA 確切版本 / patch", "converge 情境頁要求 8.18.1 P3；import 頁為 8.18.1+", "vracli version", "AUTO"),
-    ("vRO 實際版本", "「8.18.7」查無此 Orchestrator 版號；升級來源需 ≥ 8.18.1", "vracli version", "AUTO"),
+    ("Aria Operations 8.18.7 拓樸", "節點數、cloud proxy / remote collector、管理套件與自訂內容；是否由 Aria Suite Lifecycle 管理", "Aria Ops /admin", "ARC"),
     ("vIDM / Aria Suite Lifecycle 位置與版本", "vIDM 升級後仍是 VCFA 驗證來源；是否隨 vRA 一起搬", "vSphere inventory", "AUTO"),
     ("vCenter HA", "converge 與 import 都不支援 VCHA（ELM 已於 10/7 確認沒有）", "vSphere Client", "SYS"),
     ("兩朵雲 8.0.3 確切 build", "8.0U3j → 9.1.0 不支援、→ 9.1.1 支援；8.0U3k 需查 Interop（KB 450972 back-in-time）", "VAMI / esxcli", "SYS"),
     ("SRM 配對拓樸", "兩朵雲是否互為配對、PG 方向、replication 方式 → 決定先升哪一站", "SRM UI", "DR"),
     ("WLD import 方案 A / B", "A：import 8.0.3（自建 3-node NSX 4.2）／B：先升 vCenter 再 import 共用 NSX（建議）", "設計會議", "ARC、PM"),
     ("Management Cluster 網段與容量", "需提供 vRA 同 L2 網段；VCFA 藍綠期間資源約 2 倍", "網路 / 容量盤點", "NET、ARC"),
-    ("VCF Operations 新部署或沿用", "9.1.1 起須在第一個 Instance 管理網域；是否已有 Aria Operations 8.18", "盤點", "ARC"),
+    ("Aria Ops 自訂內容影響評估", "9.1 移除部分 metric；dashboards / reports / super metrics 需先評估與匯出", "pre-upgrade assessment", "ENG"),
     ("過渡期 interop", "Interop 對 Aria Automation 8.18 ↔ vCenter / ESX 9.x 標 Not Supported（推定指 endpoint）；過渡期盡量縮短、必要時開 SR 確認", "Interop Matrix / SR", "ARC"),
     ("vLCM image 叢集 Shift+R 退版", "KB 316592 未說明對 vLCM image 一致性的影響", "Lab 驗證 + SR", "ENG"),
 ]
@@ -316,8 +320,9 @@ DOCS = [
     ("Automation", "Upgrading to VCF Automation 9.1", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/deployment/upgrading-cloud-foundation/phase-3-import-and-upgrade-aria-automation-8-to-vcf-automation-9.html"),
     ("Automation", "Perform the Upgrade to VCF Automation 9.1", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/deployment/upgrading-cloud-foundation/phase-3-import-and-upgrade-aria-automation-8-to-vcf-automation-9/upgrade-to-vcf-automation.html"),
     ("Automation", "Migrate VCF Automation SSO from vIDM to VCF Identity Broker", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/deployment/upgrading-cloud-foundation/phase-3-import-and-upgrade-aria-automation-8-to-vcf-automation-9/migrate-vcf-automation-single-sign-on-configuration-from-vmware-identity-manager-to-vcf-identity-broker.html"),
-    ("Orchestrator", "Upgrade to VCF Operations Orchestrator 9.1", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/deployment/upgrading-cloud-foundation/upgrade-a-standalone-or-clustered-vrealize-orchestrator-8-0-1-deployment-with-iso-image.html"),
-    ("Orchestrator", "Configure VCF Operations Orchestrator for VCF Automation VM Apps Organizations", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/deployment/deploying-a-new-vmware-cloud-foundation-or-vmware-vsphere-foundation-private-cloud-/manual-deployment-of-components-to-complete-your-vcf-platform/download-and-deploy-the-vco-va/integrate-vcf-operations-orchestrator-with-vcf-automation-for-vm-apps.html"),
+    ("Operations", "Upgrading to VCF Operations 9.1", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/deployment/upgrading-cloud-foundation/upgrade-backup-and-restore.html"),
+    ("Operations", "Create Snapshots of the VCF Operations Nodes Before You Upgrade", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/deployment/upgrading-cloud-foundation/upgrade-backup-and-restore/create-a-snapshot.html"),
+    ("Operations", "Perform the Upgrade to VCF Operations 9.1", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/deployment/upgrading-cloud-foundation/upgrade-backup-and-restore/install-a-software-update.html"),
     ("Upgrade", "Upgrading to VCF 9.1.x（元件升級順序）", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/deployment/upgrading-cloud-foundation.html"),
     ("Import WLD", "Import an Existing vCenter to Create a Workload Domain", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/building-your-private-cloud-infrastructure/working-with-workload-domains/import-an-existing-vcenter-to-create-a-workload-domain.html"),
     ("Import WLD", "Upgrading VCF Workload Domains to 9.1.x", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/lifecycle-management/upgrade-workload-domains-to-vcf-5-2.html"),
@@ -373,49 +378,49 @@ GIT_REFS = [
     ("S01", "vra-lifecycle（private）", "runbooks/vcf911-vra8-import-upgrade-worklog.md › Phase ④", "vRA appliance 跨 vCenter 搬進管理網域：熱遷移因 CPU feature 失敗、165 GB 冷遷移約 97 分；/vco/api/healthstatus 作為就緒判斷"),
     ("S01", "vra-lifecycle（private）", "runbooks/scripts/vcf911-vra8-upgrade/coldmove-vra9.ps1、xvmotion-vra9.ps1", "PowerCLI 冷 / 熱遷移腳本（PowerCLI 模組需釘同一版 13.5）"),
     ("S01", "vra-lifecycle（private）", "runbooks/vra8-cross-vcenter-migration-day2-power.md", "vRA 管的 workload VM 跨 vCenter 搬遷後 Day-2 可用；_ovfenv ISO 擋熱 vMotion → 冷搬（對象是 workload VM，不是 appliance）"),
-    ("S02 / S04", "vcf9.1-lab-private（private）", "installer-deploy/（Invoke-Vcf9InstallerDeploy_v1.ps1、spec/management-domain.template_v1.json）", "Installer 部署腳本與 spec 範本"),
-    ("S03", "vcf9offlinescript", "README.md、CUSTOMER-DEPLOY-GUIDE.md、create_vcf9_depot_server_v5.sh、import_vcf9depot_ca.sh", "Offline depot 一鍵建置（nginx / apache、HTTPS、basic auth）、CA 匯入 Installer / SDDC Manager / VCF Ops、客戶交付指南"),
-    ("S03", "vcf9offlinescript", "INSTALLER_CONNECT_TROUBLESHOOTING.md、DEPOT-WAY-A/B/C、DOWNLOAD-INTO-DEPOT.md", "Installer 連 depot 除錯；三種灌 binaries 的方式"),
-    ("S03", "vcf-download-tool", "README / CLI-REFERENCE / GOTCHAS / PROXY / WINDOWS", "VCF Download Tool 用法、proxy、Windows、activation code 判讀"),
-    ("S03", "vcf9.1-lab-private（private）/ vcf9offlinescript", "FLEET-DEPOT-CA-TRUST.md", "Fleet Depot Service 信任自簽 depot CA（KB 442978；private 版含腳本）"),
-    ("S04", "v8tov9", "converge/README.md（範本 1–3）", "Converge 9.1.1 JSON 範本：不給 TEP / 沿用既有 NSX / 多 cluster；逐 cluster 驗證項；evacuate_offline_vms；vSS 是硬擋點"),
-    ("S04", "v8tov9", "converge/no-overlay/（README + VCF911-Converge-NoOverlay.docx）", "完全不部署 overlay 的 converge：23 頁手冊、5 個里程碑耗時、14 個踩坑速查"),
-    ("S04", "v8tov9", "converge-existing-ops/README.md", "沿用既有 VCF Ops / License Server；Plan › Existing Component；容量驗證只看叢集總量；depot URL 用 IP"),
-    ("S04", "debug-vcf9.1", "08-ops-loss-and-mgmt-rebuild.md §4、04-bringup-failures.md", "Converge 精靈踩雷：IP Pool ≥ 12、DRS fully automated、certificate chain"),
-    ("S05 / S06", "vra-lifecycle（private）", "runbooks/vcf911-vra8-import-upgrade-worklog.md", "Import 精靈、precheck 擋點（管理網域、KB 425489）、藍綠升級階段、fleet 誤報 failed 的 4 項證據"),
-    ("S05 / S06", "debug-vcf9.1", "deliverables/kb441333-vcfa-removal/（含 m03-test-notes-20261007.md）", "VCFA 正常移除三步；9.1.1 移除後再匯入 vRA 8 並升級成功（import 5 分、升級 4 h 47 m）"),
-    ("S06", "vra-lifecycle（private）", "runbooks/vcfa-reset-provider-password.md", "Provider 密碼遺失時的重設程序"),
-    ("S06", "vra-lifecycle（private）", "runbooks/vcf911-vcfa-fleet-record-manual-fix-optionB.md", "⚠ 非官方：fleet 帳面補正（僅限 lab；客戶環境請開 SR）"),
-    ("S06", "debug-vcf9.1", "06-vcfa.md", "VCFA 應用層除錯（gateway / pods / region quota）"),
-    ("S07 / S11", "v8tov9", "vc-8.0.3-to-9.1.1-firstboot-failure/README.md", "vCenter 8.0.3 → 9.1.1 GUI 兩階段失敗 RCA；建議 RDU（33 分、停機約 5 分）；KB 396777"),
-    ("S07 / S11", "v8tov9", "doc/vcenter-8.0-to-9.1/vc8-0-3-to-9-1-migration-upgrade.docx", "vCenter 8.0.3 → 9.1 升級 walkthrough"),
-    ("S09 / S13", "v8tov9", "import-wld/（README、PHASE4-import-runbook.md、VCF911-CoverageLab-ImportWLD.docx）", "既有 vSphere 匯入 VI WLD 並共用管理網域 NSX；precheck 3 個 Error 修法；50 頁手冊"),
-    ("S09 / S13", "debug-vcf9.1", "deliverables/kb452458-principal-datastore/", "匯入叢集的 principal datastore 變更（KB 452458）"),
-    ("S10 / S14", "v8tov9", "esxi-standalone-upgrade/", "vLCM image 升主機；VCF 納管規則（build 必須等於 BOM）"),
-    ("S10 / S14", "vcf-skills", "vcf-9-ppt/runbooks/vcf9-host-maintenance-rotation.md；vcf-upgrade-ppt/runbooks/upgrade-precheck-runbook.md", "主機維護輪替、升級 precheck"),
-    ("S08 / S12", "—", "（Git 上沒有）", "SRM / Live Recovery 重新註冊無既有文件 → 依 KB 446701 與 TechDocs"),
-    ("S15", "—", "（Git 上沒有）", "vRO standalone 升級無既有文件 → 依 TechDocs《Upgrade to VCF Operations Orchestrator 9.1》"),
+    ("S03 / S05", "vcf9.1-lab-private（private）", "installer-deploy/（Invoke-Vcf9InstallerDeploy_v1.ps1、spec/management-domain.template_v1.json）", "Installer 部署腳本與 spec 範本"),
+    ("S04", "vcf9offlinescript", "README.md、CUSTOMER-DEPLOY-GUIDE.md、create_vcf9_depot_server_v5.sh、import_vcf9depot_ca.sh", "Offline depot 一鍵建置（nginx / apache、HTTPS、basic auth）、CA 匯入 Installer / SDDC Manager / VCF Ops、客戶交付指南"),
+    ("S04", "vcf9offlinescript", "INSTALLER_CONNECT_TROUBLESHOOTING.md、DEPOT-WAY-A/B/C、DOWNLOAD-INTO-DEPOT.md", "Installer 連 depot 除錯；三種灌 binaries 的方式"),
+    ("S04", "vcf-download-tool", "README / CLI-REFERENCE / GOTCHAS / PROXY / WINDOWS", "VCF Download Tool 用法、proxy、Windows、activation code 判讀"),
+    ("S04", "vcf9.1-lab-private（private）/ vcf9offlinescript", "FLEET-DEPOT-CA-TRUST.md", "Fleet Depot Service 信任自簽 depot CA（KB 442978；private 版含腳本）"),
+    ("S05", "v8tov9", "converge/README.md（範本 1–3）", "Converge 9.1.1 JSON 範本：不給 TEP / 沿用既有 NSX / 多 cluster；逐 cluster 驗證項；evacuate_offline_vms；vSS 是硬擋點"),
+    ("S05", "v8tov9", "converge/no-overlay/（README + VCF911-Converge-NoOverlay.docx）", "完全不部署 overlay 的 converge：23 頁手冊、5 個里程碑耗時、14 個踩坑速查"),
+    ("S05", "v8tov9", "converge-existing-ops/README.md", "沿用既有 VCF Ops / License Server；Plan › Existing Component；容量驗證只看叢集總量；depot URL 用 IP"),
+    ("S05", "debug-vcf9.1", "08-ops-loss-and-mgmt-rebuild.md §4、04-bringup-failures.md", "Converge 精靈踩雷：IP Pool ≥ 12、DRS fully automated、certificate chain"),
+    ("S06 / S07", "vra-lifecycle（private）", "runbooks/vcf911-vra8-import-upgrade-worklog.md", "Import 精靈、precheck 擋點（管理網域、KB 425489）、藍綠升級階段、fleet 誤報 failed 的 4 項證據"),
+    ("S06 / S07", "debug-vcf9.1", "deliverables/kb441333-vcfa-removal/（含 m03-test-notes-20261007.md）", "VCFA 正常移除三步；9.1.1 移除後再匯入 vRA 8 並升級成功（import 5 分、升級 4 h 47 m）"),
+    ("S07", "vra-lifecycle（private）", "runbooks/vcfa-reset-provider-password.md", "Provider 密碼遺失時的重設程序"),
+    ("S07", "vra-lifecycle（private）", "runbooks/vcf911-vcfa-fleet-record-manual-fix-optionB.md", "⚠ 非官方：fleet 帳面補正（僅限 lab；客戶環境請開 SR）"),
+    ("S07", "debug-vcf9.1", "06-vcfa.md", "VCFA 應用層除錯（gateway / pods / region quota）"),
+    ("S08 / S12", "v8tov9", "vc-8.0.3-to-9.1.1-firstboot-failure/README.md", "vCenter 8.0.3 → 9.1.1 GUI 兩階段失敗 RCA；建議 RDU（33 分、停機約 5 分）；KB 396777"),
+    ("S08 / S12", "v8tov9", "doc/vcenter-8.0-to-9.1/vc8-0-3-to-9-1-migration-upgrade.docx", "vCenter 8.0.3 → 9.1 升級 walkthrough"),
+    ("S10 / S14", "v8tov9", "import-wld/（README、PHASE4-import-runbook.md、VCF911-CoverageLab-ImportWLD.docx）", "既有 vSphere 匯入 VI WLD 並共用管理網域 NSX；precheck 3 個 Error 修法；50 頁手冊"),
+    ("S10 / S14", "debug-vcf9.1", "deliverables/kb452458-principal-datastore/", "匯入叢集的 principal datastore 變更（KB 452458）"),
+    ("S11 / S15", "v8tov9", "esxi-standalone-upgrade/", "vLCM image 升主機；VCF 納管規則（build 必須等於 BOM）"),
+    ("S11 / S15", "vcf-skills", "vcf-9-ppt/runbooks/vcf9-host-maintenance-rotation.md；vcf-upgrade-ppt/runbooks/upgrade-precheck-runbook.md", "主機維護輪替、升級 precheck"),
+    ("S09 / S13", "—", "（Git 上沒有）", "SRM / Live Recovery 重新註冊無既有文件 → 依 KB 446701 與 TechDocs"),
+    ("S02", "vra-lifecycle（private）", "runbooks/vcf911-vra8-import-upgrade-worklog.md › vROps 段（2026-09-05 / 09-06）", "Aria Ops 8.18.6 → VCF Ops 9.1.1 PAK 實測：snapshot、PAK 上傳 / staging、版本 API 提早報喜、真正 Online 判準"),
     ("全程", "debug-vcf9.1", "README.md（症狀路由表）、reference/commands.md", "除錯索引與常用指令"),
     ("全程", "lab-info", "runbooks/backup-sftp.md、runbooks/depot-server.md", "SFTP 備份、depot server 紀錄"),
 ]
 
-# ---- 中信雲-specific additions (also shown on the S11–S14 deck slide)
-STEP_BY_ID["S11"]["items"].insert(1, I("PRE", "若中信雲為 recovery site（依 PG 方向判定），排在 protected site 升級之後", "", "順序確認", "TechDocs: Order of Upgrading vSphere and Protection and Recovery Components", "DR", "若為 recovery site → 排在 protected site 之後"))
-STEP_BY_ID["S11"]["items"].insert(2, I("PRE", "vRA / vRO 已移出中信雲；確認 vIDM / Aria Suite Lifecycle 所在位置不受此 RDU 停機影響", "", "已確認", "", "AUTO", "確認 vIDM / ASL 不受 RDU 停機影響"))
-STEP_BY_ID["S12"]["items"].insert(6, I("VER", "Test Recovery 兩個方向都驗（若兩朵雲互為配對）", "SRM UI > Recovery Plans > Test", "Success", "", "DR", "Test Recovery 兩個方向都驗"))
+# ---- 中信雲-specific additions (also shown on the S12–S15 deck slide)
+STEP_BY_ID["S12"]["items"].insert(1, I("PRE", "若中信雲為 recovery site（依 PG 方向判定），排在 protected site 升級之後", "", "順序確認", "TechDocs: Order of Upgrading vSphere and Protection and Recovery Components", "DR", "若為 recovery site → 排在 protected site 之後"))
+STEP_BY_ID["S12"]["items"].insert(2, I("PRE", "vRA / Aria Operations 已移出中信雲；確認 vIDM / Aria Suite Lifecycle 所在位置不受此 RDU 停機影響", "", "已確認", "", "AUTO", "確認 vIDM / ASL 不受 RDU 停機影響"))
+STEP_BY_ID["S13"]["items"].insert(6, I("VER", "Test Recovery 兩個方向都驗（若兩朵雲互為配對）", "SRM UI > Recovery Plans > Test", "Success", "", "DR", "Test Recovery 兩個方向都驗"))
 
 
 # ---- CXS Lab coverage (github.com/kostenyang)
 LAB_COVERAGE = [
     ("S01", "vRA 冷遷移進管理網域", "已驗證", "2026-09-09（m02）", "熱遷移因 CPU feature 失敗 → 冷遷移 165 GB 約 97 分；搬入後 import precheck 通過", "Lab 是管理網域已建好後才搬；先搬再 Converge 未驗證", "vra-lifecycle worklog Phase ④"),
-    ("S02 / S03", "VCF Installer、Offline Depot", "已驗證", "多次（9 月）", "v5 depot 腳本、CA 匯入、客戶交付包；depot URL 用 IP", "—", "vcf9offlinescript、vcf-download-tool"),
-    ("S04", "Converge vCenter 9.1.1 + ESXi 9.1.1", "已驗證", "2026-09-19 / 09-30 / 10-05", "多 cluster、無 overlay、overlay over mgmt、沿用既有 VCF Ops 皆 COMPLETED_WITH_SUCCESS；約 5–5.5 h", "Lab 是 nested 4 台；CTBC 為 6 台實體", "v8tov9 converge/、converge-existing-ops/"),
-    ("S05", "Import vRA 8.18.1", "已驗證", "2026-09-06 / 10-07（m03）", "import 約 5 分，來源不受影響", "—", "vra-lifecycle（branch vra8-import-upgrade-m03）"),
-    ("S06", "vRA → VCF Automation 9.1.1", "已驗證", "2026-10-07（m03）", "precheck 一次過 36 分、升級 4 h 47 m 一次成功、中斷約 44 分、資料 ID 全相同；來源自動 snapshot", "9/9 m02（fleet 9.1.0.0400）曾 7 h 55 m + 假失敗", "vra-lifecycle（branch vra8-import-upgrade-m03）"),
-    ("S07 / S11", "vCenter 8.0.3 → 9.1.1", "已驗證", "2026-08-19 / 09-21 / 10-02", "RDU 33 分；CLI migration 50 分；RDU 遇 NSX < 9.1 註冊會卡 switchover", "Lab 無 SRM extension", "v8tov9 vc-8.0.3-to-9.1.1-firstboot-failure、customer-vvf-no-sddcm.md、import-wld/cli"),
-    ("S08 / S12", "SRM Reconfigure + Reconnect", "未驗證", "—", "—", "Git 無 SRM 實測 → 依 KB 446701；建議 Lab 補測", "—"),
-    ("S09 / S13", "Import WLD 共用管理網域 NSX", "已驗證", "2026-10-03", "vCenter 9.1.1 + ESXi 8.0.3 匯入 57/57、約 15 分；precheck 3 個 Error 已有修法", "—", "v8tov9 import-wld/"),
-    ("S10 / S14", "匯入後 ESXi 8.0.3 → 9.1.1（VCF LCM）", "未驗證", "—", "相關：vLCM 升獨立主機（9/29）、ESX depot zip 取得法", "Lab 匯入後主機維持 8.0.3，未在 VCF 內升級 → 建議 Lab 補測", "v8tov9 esxi-standalone-upgrade/"),
-    ("S15", "vRO → 9.1.1", "未驗證", "—", "—", "Git 無 vRO standalone 升級實測 → 依 TechDocs；建議 Lab 補測", "—"),
+    ("S03 / S04", "VCF Installer、Offline Depot", "已驗證", "多次（9 月）", "v5 depot 腳本、CA 匯入、客戶交付包；depot URL 用 IP", "—", "vcf9offlinescript、vcf-download-tool"),
+    ("S05", "Converge vCenter 9.1.1 + ESXi 9.1.1", "已驗證", "2026-09-19 / 09-30 / 10-05", "多 cluster、無 overlay、overlay over mgmt 皆 COMPLETED_WITH_SUCCESS（約 5–5.5 h）；沿用既有 VCF Ops 的 convert 段 42/42 成功（10/5 NSX 失敗為單台主機 vCPU 不足）", "Lab 是 nested 4 台；CTBC 為 6 台實體", "v8tov9 converge/、converge-existing-ops/"),
+    ("S06", "Import vRA 8.18.1", "已驗證", "2026-09-06 / 10-07（m03）", "import 約 5 分，來源不受影響", "—", "vra-lifecycle（branch vra8-import-upgrade-m03）"),
+    ("S07", "vRA → VCF Automation 9.1.1", "已驗證", "2026-10-07（m03）", "precheck 一次過 36 分、升級 4 h 47 m 一次成功、中斷約 44 分、資料 ID 全相同；來源自動 snapshot", "9/9 m02（fleet 9.1.0.0400）曾 7 h 55 m + 假失敗", "vra-lifecycle（branch vra8-import-upgrade-m03）"),
+    ("S08 / S12", "vCenter 8.0.3 → 9.1.1", "已驗證", "2026-08-19 / 09-21 / 10-02", "RDU 33 分；CLI migration 50 分；RDU 遇 NSX < 9.1 註冊會卡 switchover", "Lab 無 SRM extension", "v8tov9 vc-8.0.3-to-9.1.1-firstboot-failure、customer-vvf-no-sddcm.md、import-wld/cli"),
+    ("S09 / S13", "SRM Reconfigure + Reconnect", "未驗證", "—", "—", "Git 無 SRM 實測 → 依 KB 446701；建議 Lab 補測", "—"),
+    ("S10 / S14", "Import WLD 共用管理網域 NSX", "已驗證", "2026-10-03", "vCenter 9.1.1 + ESXi 8.0.3 匯入 57/57、約 15 分；precheck 3 個 Error 已有修法", "—", "v8tov9 import-wld/"),
+    ("S11 / S15", "匯入後 ESXi 8.0.3 → 9.1.1（VCF LCM）", "未驗證", "—", "相關：vLCM 升獨立主機（9/29）、ESX depot zip 取得法", "Lab 匯入後主機維持 8.0.3，未在 VCF 內升級 → 建議 Lab 補測", "v8tov9 esxi-standalone-upgrade/"),
+    ("S02", "Aria Ops 8.18 → VCF Ops 9.1.1（PAK）", "已驗證", "2026-09-06", "8.18.6 → 9.1.1 單節點約 23 分、nested 約 48 分；版本 API 會早於叢集 Online", "Lab 未跑 pre-upgrade assessment；CTBC 為 8.18.7、可能多節點", "vra-lifecycle worklog（vROps 段）"),
     ("方案 A", "Import 8.0.3 並自建 NSX 4.2", "未驗證", "—", "—", "Lab 未測 → 也是建議方案 B 的理由之一", "—"),
 ]

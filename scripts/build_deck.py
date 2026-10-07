@@ -213,9 +213,9 @@ def short_ref(ref):
 new_slides = []
 
 # ---- 2 Plan at a glance
-s = content_slide("Plan at a Glance", "結論先講：原 13 步大方向可行，4 個地方要調整", TEAL)
+s = content_slide("Plan at a Glance", "結論先講：原 13 步大方向可行；調整集中在搬遷方式、WLD 匯入路徑與 Depot", TEAL)
 cols = [
-    ("01", PLUM, "Sequence / 順序調整", ["vRO 移到最後（VCFA 9.1.1 之後）", "vRA / vRO 先冷遷移進管理網域", "WLD 升級拆成 vCenter、ESXi 兩段"]),
+    ("01", PLUM, "Sequence / 順序調整", ["原 1–7 步順序可行（vRO = Aria Ops）", "Aria Ops 先搬、先升 9.1.1，Converge 沿用", "WLD 升級拆成 vCenter、ESXi 兩段"]),
     ("02", TEAL, "WLD Path / 匯入路徑", ["import 8.0.3 一定會帶 NSX（新 3-node）", "建議：vCenter 先 RDU → import 共用 NSX", "設計會議定案 A / B"]),
     ("03", SKY, "Depot / 離線來源", ["Offline Depot 非必要，但建議架", "Installer 內 binaries 不會轉移", "VCFA、WLD 升級都還要用"]),
     ("04", GREEN, "Gates & PONR / 管控", ["G0–G5 六個 Gate", "PONR：Converge、兩次 Import、vSAN format", "每一步都有退版點與截止點"]),
@@ -234,7 +234,7 @@ for i, (num, col, head, bl) in enumerate(cols):
 box = rect(s, 0.63, 4.95, 12.07, 0.95, "F5F7F9", "D9D9D9", shape=MSO_SHAPE.ROUNDED_RECTANGLE)
 box.adjustments[0] = 0.08
 tbox(s, 0.8, 5.02, 11.8, 0.85, [
-    [("Scope ｜ ", {"bold": True, "color": NAVY}), ("Management Cluster Converge · vRA 8.18 → VCF Automation 9.1.1 · 整合雲 / 中信雲 Import 與升級 · SRM 重新註冊 · vRO → 9.1.1", {"color": DARK})],
+    [("Scope ｜ ", {"bold": True, "color": NAVY}), ("Management Cluster Converge · vRA 8.18 → VCF Automation 9.1.1 · 整合雲 / 中信雲 Import 與升級 · Aria Operations 8.18.7 → VCF Operations 9.1.1 · SRM 重新註冊", {"color": DARK})],
     [("前提 ｜ ", {"bold": True, "color": NAVY}), ("不含 NSX Edge cluster（無 Edge node / T0 / T1）；每一步都要有已在 Lab 演練過的退版點，才進正式環境。", {"color": DARK})],
 ], size=11, space_after=4, anchor=MSO_ANCHOR.MIDDLE)
 new_slides.append(s)
@@ -252,15 +252,15 @@ rows = [
     ("MANAGEMENT", PLUM,
      ["Management Cluster", "vCenter 9.1.1 + ESXi 9.1.1 ×6（vSphere，尚非 VCF）"],
      ["VCF 9.1.1 Management Domain（Converge）", "SDDC Manager · NSX Manager（無 Edge）· VCF Operations + Mgmt Services · Identity Broker · License Server",
-      "VCF Automation 9.1.1（vRA 8.18 藍綠升級）· VCF Operations orchestrator 9.1.1（vRO）"]),
+      "VCF Operations 9.1.1（Aria Ops 8.18.7 PAK 升級、Converge 沿用）· VCF Automation 9.1.1（vRA 8.18 藍綠升級）"]),
     ("WORKLOAD DOMAIN ｜ 整合雲", TEAL,
      ["整合雲 Cluster", "vCenter 8.0.3 + ESXi 8.0.3 ×6 · SRM 9.1.1"],
      ["VI Workload Domain（Import）", "vCenter 9.1.1 + ESXi 9.1.1 ×6 · 共用管理網域 NSX 9.1.1（方案 B）",
       "SRM 9.1.1：vCenter 升級後兩站 Reconfigure + Reconnect"]),
     ("WORKLOAD DOMAIN ｜ 中信雲", SKY,
-     ["中信雲 Cluster", "vCenter 8.0.3 + ESXi 8.0.3 ×6 · SRM 9.1.1", "vRA 8.18 · vRO（將移出至管理網域）"],
+     ["中信雲 Cluster", "vCenter 8.0.3 + ESXi 8.0.3 ×6 · SRM 9.1.1", "vRA 8.18 · Aria Operations 8.18.7（將移出至管理網域）"],
      ["VI Workload Domain（Import）", "vCenter 9.1.1 + ESXi 9.1.1 ×6 · 共用管理網域 NSX 9.1.1（方案 B）",
-      "SRM 9.1.1 重新註冊；vRA / vRO 已不在此叢集"]),
+      "SRM 9.1.1 重新註冊；vRA / Aria Ops 已不在此叢集"]),
 ]
 y = 1.65
 for tag, col, cur, tgt in rows:
@@ -278,7 +278,7 @@ new_slides.append(s)
 # ---- 5 original plan review
 s = content_slide("Original Plan Review ｜ 13 Steps Checked against TechDocs",
                   "原暫定計畫逐步檢視：照做 / 調整 / 移位，以及對應的建議步驟", PLUM,
-                  "依據：TechDocs VCF 9.1（Converge、Import vCenter、Import / Upgrade Aria Automation、Upgrade VCF Operations Orchestrator、Downloading Binaries）；KB 318582、446701；Broadcom Interop Matrix")
+                  "依據：TechDocs VCF 9.1（Converge、Import vCenter、Import / Upgrade Aria Automation、Upgrading to VCF Operations 9.1、Downloading Binaries）；KB 318582、446701；Broadcom Interop Matrix")
 hdr = ["#", "原步驟", "判定", "說明", "建議步驟"]
 rows_t = [hdr] + [[a, b, c, d, f] for (a, b, c, d, e, f) in ORIG_REVIEW]
 VC = {"照做": (GREEN, True), "調整": (ORANGE, True), "移到最後": (CRIMSON, True), "建議架": (TEAL, True), "拆兩段": (ORANGE, True)}
@@ -325,7 +325,7 @@ option(6.75, 5.95, "方案 B ｜ vCenter 先升 9.1.1，再 Import 共用 NSX", 
         "!Import 前須在管理網域 NSX 註冊 Compute Manager"], rec=True)
 cb = rect(s, 0.63, 5.5, 12.07, 0.95, "FFF8E6", GOLD, shape=MSO_SHAPE.ROUNDED_RECTANGLE, lw=1.25); cb.adjustments[0] = 0.1
 tbox(s, 0.8, 5.55, 11.8, 0.85, [
-    [("決策需求 ｜ ", {"bold": True, "color": NAVY}), ("G0 前由 ARC + PM 定案。建議方案 B（本簡報與 Excel 的 S07–S14 以方案 B 撰寫）。", {})],
+    [("決策需求 ｜ ", {"bold": True, "color": NAVY}), ("G0 前由 ARC + PM 定案。建議方案 B（本簡報與 Excel 的 S08–S15 以方案 B 撰寫）。", {})],
     [("若選方案 A ｜ ", {"bold": True, "color": NAVY}), ("Import 前以 KB 429205 控制 NSX 版本；WLD 升級改為 NSX → vCenter → ESXi，退版改以 file-based restore 為主（來源 vCenter VM 會被刪除）。", {})],
 ], size=11, color=DARK, space_after=4, anchor=MSO_ANCHOR.MIDDLE)
 new_slides.append(s)
@@ -339,21 +339,22 @@ s = content_slide("Recommended Flow ｜ 17 Steps in 5 Phases",
                   "紅色 = Point of No Return（需簽核）　金色 = Gate　｜ 依據：TechDocs《Upgrading to VCF 9.1.x》元件順序；KB 440630")
 lanes = [
     ("P0", "準備", [("S00", "盤點 / 備份", "新增", "G0", False)]),
-    ("P1", "管理網域", [("S01", "vRA / vRO 冷遷移", "#1", "", False), ("S02", "VCF Installer", "#3", "", False),
-                       ("S03", "Depot / Binaries", "#4", "", False), ("S04", "Converge", "#5", "G1", True),
-                       ("S05", "Import vRA", "#6", "", False), ("S06", "VCFA 9.1.1", "#7", "G2", False)]),
-    ("P2", "整合雲", [("S07", "vCenter RDU", "#10", "", False), ("S08", "SRM 重新註冊", "#11", "", False),
-                     ("S09", "Import WLD", "#8", "G3", True), ("S10", "ESXi 9.1.1", "#10", "", False)]),
-    ("P3", "中信雲", [("S11", "vCenter RDU", "#12", "", False), ("S12", "SRM 重新註冊", "#13", "", False),
-                     ("S13", "Import WLD", "#9", "G4", True), ("S14", "ESXi 9.1.1", "#12", "", False)]),
-    ("P4", "收尾", [("S15", "vRO 9.1.1", "#2", "", False), ("S16", "vSAN / 收尾", "新增", "G5", True)]),
+    ("P1", "管理網域", [("S01", "vRA/Ops 冷搬", "#1", "", False), ("S02", "Ops → 9.1.1", "#2", "", False), ("S03", "VCF Installer", "#3", "", False),
+                       ("S04", "Depot / Binaries", "#4", "", False), ("S05", "Converge", "#5", "G1", True),
+                       ("S06", "Import vRA", "#6", "", False), ("S07", "VCFA 9.1.1", "#7", "G2", False)]),
+    ("P2", "整合雲", [("S08", "vCenter RDU", "#10", "", False), ("S09", "SRM 重新註冊", "#11", "", False),
+                     ("S10", "Import WLD", "#8", "G3", True), ("S11", "ESXi 9.1.1", "#10", "", False)]),
+    ("P3", "中信雲", [("S12", "vCenter RDU", "#12", "", False), ("S13", "SRM 重新註冊", "#13", "", False),
+                     ("S14", "Import WLD", "#9", "G4", True), ("S15", "ESXi 9.1.1", "#12", "", False)]),
+    ("P4", "收尾", [("S16", "vSAN / 收尾", "新增", "G5", True)]),
 ]
 y = 1.38
 for pid, pname, steps in lanes:
     col = PHASE_COLOR[pid]
     lb = rect(s, 0.63, y, 1.45, 0.86, col, shape=MSO_SHAPE.ROUNDED_RECTANGLE); lb.adjustments[0] = 0.12
     shape_text(lb, [[(pid + "\n", {"size": 9})], [(pname, {"size": 12})]], size=12)
-    bx, bw = 2.2, 1.66
+    bx = 2.2
+    bw = min(1.66, (10.5 - 0.1 * (len(steps) - 1)) / len(steps))
     for i, (sid, name, orig, gate, ponr) in enumerate(steps):
         x = bx + i * (bw + 0.1)
         b = rect(s, x, y, bw, 0.86, "FFFFFF", CRIMSON if ponr else col, shape=MSO_SHAPE.ROUNDED_RECTANGLE, lw=2 if ponr else 1.25)
@@ -373,15 +374,15 @@ s = content_slide("Rollback Means & Cut-off by Step",
                   "每一步「用什麼退」以及「退到哪個時間點為止」", TEAL,
                   "依據：KB 448258、436924、430524、441333、446701、448322、316592；TechDocs《Optimized Update of vCenter and NSX》《About the vSAN Disk Format》；CXS Lab 實測")
 rb_rows = [["步驟", "退版手段", "截止點 / PONR"],
-    ["S01 vRA / vRO 冷遷移", "反向冷遷移回中信雲；或開回 Clone 保留的來源（保持關機）", "S05 Import 前"],
-    ["S04 Converge", "完成前失敗：刪除已部署元件與 Installer，依 JSON 重做（KB 448258）", "⚠ 成功即 PONR（G1）"],
-    ["S05 Import vRA", "只是註冊、來源不變；需撤除依 KB 441333 cleanup", "—"],
-    ["S06 VCFA 9.1.1", "Cutover 前來源原封不動；Cutover 後開回 8.18 / revert snapshot + 開 SR", "刪除 8.18 來源 VM / snapshot"],
-    ["S07 / S11 vCenter RDU", "Switchover 前 RDU 自動回復；之後以 file-based backup restore", "刪除退役來源 VM / 舊備份"],
-    ["S08 / S12 SRM 重新註冊", "Reconfigure 不破壞設定；失敗依 KB 448322 修正後重做", "—"],
-    ["S09 / S13 Import WLD", "無 UI 反向；KB 436924（API 移除 domain）+ KB 430524", "⚠ Import 完成即 PONR（G3 / G4）"],
-    ["S10 / S14 ESXi", "單台 Shift+R 回 altbootbank（KB 316592；vLCM image 影響待 Lab 驗證）", "vSAN on-disk format 升級"],
-    ["S15 vRO", "Revert 升級前 snapshot（不含 memory）", "刪除 snapshot"],
+    ["S01 vRA / Aria Ops 冷遷移", "反向冷遷移回中信雲；或開回 Clone 保留的來源（保持關機）", "S06 Import 前"],
+    ["S02 Aria Ops → VCF Ops 9.1.1", "Take Cluster Offline → 全節點 revert snapshot（不含 memory）", "S05 Converge 併入前"],
+    ["S05 Converge", "完成前失敗：刪除已部署元件與 Installer，依 JSON 重做（KB 448258）", "⚠ 成功即 PONR（G1）"],
+    ["S06 Import vRA", "只是註冊、來源不變；需撤除依 KB 441333 cleanup", "—"],
+    ["S07 VCFA 9.1.1", "Cutover 前來源原封不動；Cutover 後開回 8.18 / revert snapshot + 開 SR", "刪除 8.18 來源 VM / snapshot"],
+    ["S08 / S12 vCenter RDU", "Switchover 前 RDU 自動回復；之後以 file-based backup restore", "刪除退役來源 VM / 舊備份"],
+    ["S09 / S13 SRM 重新註冊", "Reconfigure 不破壞設定；失敗依 KB 448322 修正後重做", "—"],
+    ["S10 / S14 Import WLD", "無 UI 反向；KB 436924（API 移除 domain）+ KB 430524", "⚠ Import 完成即 PONR（G3 / G4）"],
+    ["S11 / S15 ESXi", "單台 Shift+R 回 altbootbank（KB 316592；vLCM image 影響待 Lab 驗證）", "vSAN on-disk format 升級"],
     ["S16 vSAN format", "無退版手段", "⚠ 執行即 PONR（G5）"]]
 def fills_rb(r, c, v):
     if c == 2 and v.startswith("⚠"): return ("FBE9EB", CRIMSON, True)
@@ -462,19 +463,19 @@ def step_slide(st):
             idx = last + 1
     return s
 
-for sid in ["S00", "S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10"]:
+for sid in ["S00", "S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10", "S11"]:
     new_slides.append(step_slide(STEP_BY_ID[sid]))
 
-# combined S11–S14
-s = content_slide("S11–S14 ｜ Repeat for 中信雲", "中信雲：步驟同 S07–S10，只列差異", PHASE_COLOR["P3"],
+# combined S12–S15
+s = content_slide("S12–S15 ｜ Repeat for 中信雲", "中信雲：步驟同 S08–S11，只列差異", PHASE_COLOR["P3"],
                   "依據：KB 446701（每次 vCenter 升級後兩站 Reconfigure）；TechDocs《Order of Upgrading vSphere and Protection and Recovery Components》《Import an Existing vCenter》")
-tbox(s, 0.6, 1.2, 11, 0.28, ["原計畫 #9、#12、#13 ｜ 負責：ENG、SYS、DR、ARC ｜ 詳細 checklist 見 Excel（S11–S14 已逐項展開）"], size=10, color=GREY, margin=0.03)
+tbox(s, 0.6, 1.2, 11, 0.28, ["原計畫 #9、#12、#13 ｜ 負責：ENG、SYS、DR、ARC ｜ 詳細 checklist 見 Excel（S12–S15 已逐項展開）"], size=10, color=GREY, margin=0.03)
 pill(s, 11.3, 1.2, 1.4, 0.27, "G4 ⚠ PONR", CRIMSON, size=9)
 sub = [
-    ("S11 vCenter RDU", SKY, ["☐ 同 S07 全部項目", "☐ 若中信雲為 recovery site，排在 protected site 之後", "☐ RDU 暫時 IP 用中信雲網段", "☐ vRA / vRO 已移出；確認 vIDM / ASL 不受 RDU 停機影響"]),
-    ("S12 SRM 重新註冊", SKY, ["☐ 同 S08 全部項目", "☐ 兩站 VAMI Reconfigure 再做一次（每次 vCenter 升級後都要）", "☐ Test Recovery 兩個方向都驗"]),
-    ("S13 Import WLD", CRIMSON, ["☐ 同 S09 全部項目", "☐ 中信雲 vCenter 先在管理網域 NSX 註冊 Compute Manager", "☐ ⚠ Import 完成即 PONR → G4 簽核"]),
-    ("S14 ESXi 9.1.1", SKY, ["☐ 同 S10 全部項目", "☐ 完成後三個叢集皆 9.1.1", "☐ vSAN on-disk format 統一留到 S16"]),
+    ("S12 vCenter RDU", SKY, ["☐ 同 S08 全部項目", "☐ 若中信雲為 recovery site，排在 protected site 之後", "☐ RDU 暫時 IP 用中信雲網段", "☐ vRA / Aria Ops 已移出；確認 vIDM / ASL 不受 RDU 停機影響"]),
+    ("S13 SRM 重新註冊", SKY, ["☐ 同 S09 全部項目", "☐ 兩站 VAMI Reconfigure 再做一次（每次 vCenter 升級後都要）", "☐ Test Recovery 兩個方向都驗"]),
+    ("S14 Import WLD", CRIMSON, ["☐ 同 S10 全部項目", "☐ 中信雲 vCenter 先在管理網域 NSX 註冊 Compute Manager", "☐ ⚠ Import 完成即 PONR → G4 簽核"]),
+    ("S15 ESXi 9.1.1", SKY, ["☐ 同 S11 全部項目", "☐ 完成後三個叢集皆 9.1.1", "☐ vSAN on-disk format 統一留到 S16"]),
 ]
 for i, (h, c, bl) in enumerate(sub):
     x = 0.63 + i * (2.93 + 0.117)
@@ -483,7 +484,7 @@ for i, (h, c, bl) in enumerate(sub):
     tbox(s, x + 0.06, 2.08, 2.81, 4.3, bl, size=10.5, color=DARK, space_after=8)
 new_slides.append(s)
 
-for sid in ["S15", "S16"]:
+for sid in ["S16"]:
     new_slides.append(step_slide(STEP_BY_ID[sid]))
 
 # ---- section

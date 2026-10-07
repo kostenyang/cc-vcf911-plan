@@ -1,6 +1,6 @@
 # 中信 VCF 9.1.1 Converge & Import 執行計畫
 
-Management Cluster Converge 成 VCF 9.1.1 管理網域 → vRA 8.18 import / 升級 VCF Automation 9.1.1 → 整合雲 / 中信雲 Import 為 VI Workload Domain 並升級 → SRM 重新註冊 → vRO 9.1.1。不含 NSX Edge cluster。
+Management Cluster Converge 成 VCF 9.1.1 管理網域 → vRA 8.18 import / 升級 VCF Automation 9.1.1 → 整合雲 / 中信雲 Import 為 VI Workload Domain 並升級 → SRM 重新註冊；Aria Operations 8.18.7 → VCF Operations 9.1.1（客戶所稱 vRO 即 Aria Operations）。不含 NSX Edge cluster。
 
 > 🔒 Private：內含客戶名稱與環境資訊。
 
@@ -27,13 +27,13 @@ python3 scripts/build_xlsx.py      # → out/CTBC_VCF911_每步Checklist.xlsx
 
 ## 重點決策（2026-10-07）
 
-- vRO 升級移到最後（官方：external Orchestrator 須在 Aria Automation → VCF Automation 之後升）
+- 「vRO」= Aria Operations 8.18.7：先冷遷移進管理叢集 → PAK 升 VCF Operations 9.1.1 → Converge 沿用既有 VCF Ops（9.1.1 起 VCF Ops 須在第一個 Instance 管理網域）
 - WLD 採**方案 B**：vCenter 先 RDU 升 9.1.1 → SRM Reconfigure → Import 共用管理網域 NSX → ESXi 走 VCF LCM（import 8.0.3 vCenter 會自建 3-node NSX）
-- vRA / vRO 冷遷移（vDS 版本不同，KB 318582）；目標 port group 與 vRA 同 L2
+- vRA / Aria Operations 冷遷移（vDS 版本不同，KB 318582）；目標 port group 與 vRA 同 L2
 - Offline Depot 建議架（Installer 內 binaries 不會轉給 Software Depot）
 - 三套 vCenter 無 ELM（客戶 10/7 確認）
 
 ## Lab 驗證缺口（正式前補測）
 
-S08 / S12 SRM Reconfigure、S10 / S14 匯入後 ESXi 8.0.3 → 9.1.1（VCF LCM）、S15 vRO 9.1.1、方案 A。
+S09 / S13 SRM Reconfigure、S11 / S15 匯入後 ESXi 8.0.3 → 9.1.1（VCF LCM）、方案 A。
 其餘步驟的實測出處見 Excel「Lab 驗證覆蓋」頁（v8tov9、vra-lifecycle、vcf9offlinescript、debug-vcf9.1）。

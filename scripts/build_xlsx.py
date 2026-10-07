@@ -54,11 +54,11 @@ ws = wb.active
 ws.title = "說明"
 title(ws, "中信 VCF 9.1.1 Converge & Import — 每一步 Checklist", "版本 v1｜2026-10-07｜Broadcom CXS｜對應簡報：CTBC_VCF911_Converge_Import_Plan.pptx")
 rows = [
-    ("範圍", "Management Cluster Converge → VCF 9.1.1 管理網域；vRA 8.18 → VCF Automation 9.1.1；整合雲 / 中信雲 Import 為 VI Workload Domain 並升級 9.1.1；SRM 重新註冊；vRO → 9.1.1。不含 NSX Edge cluster。"),
-    ("路徑假設", "WLD 採方案 B：vCenter 先以 RDU 升 9.1.1 → SRM Reconfigure → Import（共用管理網域 NSX 9.1.1）→ ESXi 走 VCF LCM。若改方案 A，S07–S14 需改寫（見簡報 Decision 頁）。"),
+    ("範圍", "Management Cluster Converge → VCF 9.1.1 管理網域；vRA 8.18 → VCF Automation 9.1.1；整合雲 / 中信雲 Import 為 VI Workload Domain 並升級 9.1.1；Aria Operations 8.18.7 → VCF Operations 9.1.1；SRM 重新註冊。不含 NSX Edge cluster。（客戶所稱 vRO 即 Aria Operations）"),
+    ("路徑假設", "WLD 採方案 B：vCenter 先以 RDU 升 9.1.1 → SRM Reconfigure → Import（共用管理網域 NSX 9.1.1）→ ESXi 走 VCF LCM。若改方案 A，S08–S15 需改寫（見簡報 Decision 頁）。"),
     ("已確認事項", "2026-10-07：三套 vCenter 皆無 Enhanced Linked Mode（客戶確認）。"),
     ("怎麼填", "只需填黃底欄位：『Checklist』頁的 狀態 / 執行人 / 完成時間 / 證據 / 備註；『Gate 簽核』、『IP & DNS 規劃』、『待確認事項』的黃底欄。其餘為計畫內容，請勿改動。"),
-    ("填寫範例", "狀態＝完成｜執行人＝王小明（中信 系統）｜完成時間＝2026-10-19 14:30｜證據＝S04-12_converge-success.png｜備註＝Validation 2 個 Warning 已確認"),
+    ("填寫範例", "狀態＝完成｜執行人＝王小明（中信 系統）｜完成時間＝2026-10-19 14:30｜證據＝S05-12_converge-success.png｜備註＝Validation 2 個 Warning 已確認"),
     ("狀態選項", "未開始 / 進行中 / 完成 / 失敗 / N/A（下拉選單；『進度總覽』頁自動統計）"),
     ("類別", "前置檢查 → 執行 → 完成驗證 → 退版 / 截止點。每一步的『退版』列須在 Lab 演練過才可進正式環境。"),
     ("依據欄", "TechDocs / KB = Broadcom 官方文件；CXS Lab 實測 = Broadcom CXS 內部 lab 實測結果（非官方文件）；推定 = 目前無官方文件直接說明，需 Lab 驗證或開 SR 確認。"),
