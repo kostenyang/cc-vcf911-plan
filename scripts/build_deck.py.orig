@@ -218,7 +218,7 @@ cols = [
     ("01", PLUM, "Sequence / 順序調整", ["原 1–7 步順序可行（vRO = Aria Ops）", "Aria Ops 先搬、先升 9.1.1，Converge 沿用", "WLD 升級拆成 vCenter、ESXi 兩段"]),
     ("02", TEAL, "WLD Path / 匯入路徑", ["import 8.0.3 一定會帶 NSX（新 3-node）", "建議：vCenter 先 RDU → import 共用 NSX", "設計會議定案 A / B"]),
     ("03", SKY, "Depot / 離線來源", ["Offline Depot 非必要，但建議架", "Installer 內 binaries 不會轉移", "VCFA、WLD 升級都還要用"]),
-    ("04", GREEN, "Gates & PONR / 管控", ["G0–G5 六個 Gate", "PONR：Converge、兩次 Import（vSAN format 不升）", "每一步都有退版點與截止點"]),
+    ("04", GREEN, "Gates & PONR / 管控", ["G0–G5 六個 Gate", "PONR：Converge、兩次 Import、vSAN format", "每一步都有退版點與截止點"]),
 ]
 x0, cw = 0.63, 2.95
 for i, (num, col, head, bl) in enumerate(cols):
@@ -346,7 +346,7 @@ lanes = [
                      ("S10", "Import WLD", "#8", "G3", True), ("S11", "ESXi 9.1.1", "#10", "", False)]),
     ("P3", "中信雲", [("S12", "vCenter RDU", "#12", "", False), ("S13", "SRM 重新註冊", "#13", "", False),
                      ("S14", "Import WLD", "#9", "G4", True), ("S15", "ESXi 9.1.1", "#12", "", False)]),
-    ("P4", "收尾", [("S16", "觀察 / 收尾", "新增", "G5", False)]),
+    ("P4", "收尾", [("S16", "vSAN / 收尾", "新增", "G5", True)]),
 ]
 y = 1.38
 for pid, pname, steps in lanes:
@@ -372,7 +372,7 @@ new_slides.append(s)
 # ---- 9 rollback summary
 s = content_slide("Rollback Means & Cut-off by Step",
                   "每一步「用什麼退」以及「退到哪個時間點為止」", TEAL,
-                  "依據：KB 448258、436924、430524、441333、446701、448322、316592；TechDocs《Optimized Update of vCenter and NSX》《Upgrade vSAN On-Disk Format Versions》；CXS Lab 實測")
+                  "依據：KB 448258、436924、430524、441333、446701、448322、316592；TechDocs《Optimized Update of vCenter and NSX》《About the vSAN Disk Format》；CXS Lab 實測")
 rb_rows = [["步驟", "退版手段", "截止點 / PONR"],
     ["S01 vRA / Aria Ops 冷遷移", "反向冷遷移回中信雲；或開回 Clone 保留的來源（保持關機）", "S06 Import 前"],
     ["S02 Aria Ops → VCF Ops 9.1.1", "Take Cluster Offline → 全節點 revert snapshot（不含 memory）", "S05 Converge 併入前"],
@@ -382,8 +382,8 @@ rb_rows = [["步驟", "退版手段", "截止點 / PONR"],
     ["S08 / S12 vCenter RDU", "Switchover 前 RDU 自動回復；之後以 file-based backup restore", "刪除退役來源 VM / 舊備份"],
     ["S09 / S13 SRM 重新註冊", "Reconfigure 不破壞設定；失敗依 KB 448322 修正後重做", "—"],
     ["S10 / S14 Import WLD", "無 UI 反向；KB 436924（API 移除 domain）+ KB 430524", "⚠ Import 完成即 PONR（G3 / G4）"],
-    ["S11 / S15 ESXi", "單台 Shift+R 回 altbootbank（KB 316592；vLCM image 影響待 Lab 驗證）", "觀察期內皆可退（vSAN format 不升）"],
-    ["S16 收尾", "無不可逆動作", "vSAN on-disk format 不升（客戶決定）"]]
+    ["S11 / S15 ESXi", "單台 Shift+R 回 altbootbank（KB 316592；vLCM image 影響待 Lab 驗證）", "vSAN on-disk format 升級"],
+    ["S16 vSAN format", "無退版手段", "⚠ 執行即 PONR（G5）"]]
 def fills_rb(r, c, v):
     if c == 2 and v.startswith("⚠"): return ("FBE9EB", CRIMSON, True)
     return None
@@ -475,7 +475,7 @@ sub = [
     ("S12 vCenter RDU", SKY, ["☐ 同 S08 全部項目", "☐ 若中信雲為 recovery site，排在 protected site 之後", "☐ RDU 暫時 IP 用中信雲網段", "☐ vRA / Aria Ops 已移出；確認 vIDM / ASL 不受 RDU 停機影響"]),
     ("S13 SRM 重新註冊", SKY, ["☐ 同 S09 全部項目", "☐ 兩站 VAMI Reconfigure 再做一次（每次 vCenter 升級後都要）", "☐ Test Recovery 兩個方向都驗"]),
     ("S14 Import WLD", CRIMSON, ["☐ 同 S10 全部項目", "☐ 中信雲 vCenter 先在管理網域 NSX 註冊 Compute Manager", "☐ ⚠ Import 完成即 PONR → G4 簽核"]),
-    ("S15 ESXi 9.1.1", SKY, ["☐ 同 S11 全部項目", "☐ 完成後三個叢集皆 9.1.1", "☐ vSAN on-disk format 不升（客戶決定）"]),
+    ("S15 ESXi 9.1.1", SKY, ["☐ 同 S11 全部項目", "☐ 完成後三個叢集皆 9.1.1", "☐ vSAN on-disk format 統一留到 S16"]),
 ]
 for i, (h, c, bl) in enumerate(sub):
     x = 0.63 + i * (2.93 + 0.117)

@@ -238,11 +238,11 @@ def wld_esx(sid, orig, phase, site):
       items=[
         I("PRE", "ESXi 9.1.1 映像 / bundle 已在 Software Depot；HCL（CPU / NIC / HBA / 韌體）確認", "", "", "TechDocs: Upgrading Workload Domains to 9.1.x", "SYS", "Depot 有 ESX 9.1.1；HCL / 韌體"),
         I("PRE", "vSAN health 綠、resync = 0；N-1 容量與 HA admission 足夠；DRS FA；affinity 規則與 SRM placeholder VM 確認", "esxcli vsan debug resync summary get", "resync 0", "", "SYS", "vSAN 綠、resync 0、N-1 容量"),
-        I("PRE", "vSAN on-disk format 本步不升（留到觀察期後，S16）", "", "", "TechDocs: About the vSAN Disk Format", "ARC", None),
+        I("PRE", "vSAN on-disk format 本案不升（客戶決定）：ESX 升級後不執行 vSphere Client > vSAN > Disk Management > Upgrade（TechDocs 列為 ESX 升級後另行手動的步驟）", "", "維持現版本", "TechDocs: Upgrade vSAN On-Disk Format Versions", "ARC", "vSAN on-disk format 不升"),
         I("EXE", "Workload Domain > Updates：Precheck → 更新 vLCM image → ESX 升級（叢集 rolling）", "VCF Ops / SDDC Manager > Workload Domain > Updates", "", "TechDocs: Upgrading Workload Domains to 9.1.x", "ENG", "Precheck → vLCM image → ESX rolling"),
         I("VER", "6 台 build 9.1.1、全部退出 MM；vSAN 綠；cluster image compliant", "", "全部正常", "", "SYS", "6 台 9.1.1、vSAN 綠、compliant"),
         I("VER", "SRM Test Recovery 再驗一次；應用抽測", "", "成功", "", "DR、APP", "SRM Test Recovery、應用抽測"),
-        I("RB", "單台 Shift+R 回 altbootbank（vLCM image 一致性影響屬推定，需 Lab 驗證）；vSAN format 升級後不可退", "", "", "KB 316592", "SYS", "單台 Shift+R（KB 316592）"),
+        I("RB", "單台 Shift+R 回 altbootbank（vLCM image 一致性影響屬推定，需 Lab 驗證）；vSAN on-disk format 不升，主機退版不受 format 限制", "", "", "KB 316592", "SYS", "單台 Shift+R（KB 316592）"),
       ])
 
 wld_vc("S08", "#10（vCenter）", "P2", "整合雲")
@@ -256,15 +256,15 @@ wld_esx("S15", "#12（ESXi）", "P3", "中信雲")
 
 # ---------------------------------------------------------------- S16
 S(id="S16", orig="新增", phase="P4", gate="G5",
-  en="Observation, vSAN Format & Close-out", zh="觀察期、vSAN on-disk format 與收尾",
-  own="PM、ARC、ENG、SYS", dur="", ponr=True,
+  en="Observation & Close-out", zh="觀察期與收尾",
+  own="PM、ARC、ENG、SYS", dur="", ponr=False,
   items=[
-    I("PRE", "觀察期無重大事件；客戶簽核 G5", "", "簽核", "", "PM", "觀察期 OK + G5 簽核"),
-    I("EXE", "vSAN on-disk format 升級（三個叢集；之後主機軟體無法退版）", "Cluster > vSAN > Disk Management > Upgrade", "完成", "TechDocs: About the vSAN Disk Format", "SYS", "vSAN on-disk format（PONR）"),
+    I("PRE", "觀察期無重大事件；客戶簽核 G5（結案）", "", "簽核", "", "PM", "觀察期 OK + G5 結案簽核"),
+    I("EXE", "vSAN on-disk format 不升級（客戶決定，三個叢集維持現版本）：此為選擇性步驟，僅新版 format 才有的功能不啟用；vSAN Health 若出現 format 版本提示，列為已知項目", "", "記錄於 As-Built", "TechDocs: Upgrade vSAN On-Disk Format Versions", "ARC", "vSAN on-disk format 不升（客戶決定）"),
     I("EXE", "VDS 升級（選擇性）；刪除各階段 snapshot；移除已退役的 vCenter 來源 VM", "", "", "", "SYS", "VDS（選擇性）、清 snapshot / 舊 VM"),
     I("EXE", "vIDM → VCF Identity Broker 遷移另案規劃；完成前保留 vIDM 與 Aria Suite Lifecycle 8.x", "", "", "TechDocs: Migrate VCF Automation SSO from vIDM to VCF Identity Broker", "ARC", "vIDM → Identity Broker 另案"),
     I("VER", "授權、密碼 / 憑證到期監控、SFTP 備份排程正常；As-Built 與升級 / 退版測試報告", "", "交付", "", "ARC", "授權、備份排程、As-Built"),
-    I("RB", "vSAN format 升級後無退版手段 → PONR", "", "", "TechDocs: About the vSAN Disk Format", "PM", "⚠ vSAN format 後不可退（PONR）"),
+    I("RB", "本步無不可逆動作；日後若要升 vSAN on-disk format，另案評估（升級後無退版手段）", "", "", "TechDocs: Upgrade vSAN On-Disk Format Versions", "PM", "無不可逆動作"),
   ])
 
 STEP_BY_ID = {s["id"]: s for s in STEPS}
@@ -292,7 +292,7 @@ GATES = [
     ("G2", "S07 後", "VCFA 9.1.1 cutover", "Tenant / Provider 登入、資料完整、Day-2 成功；8.18 來源保留至觀察期後", "PM、AUTO", False),
     ("G3", "S10", "整合雲 import", "vCenter 9.1.1 正常、SRM Test Recovery 成功、Compute Manager 已註冊", "PM、ARC、DR", True),
     ("G4", "S14", "中信雲 import", "同 G3", "PM、ARC、DR", True),
-    ("G5", "S16", "vSAN on-disk format", "觀察期無重大事件、客戶簽核", "PM", True),
+    ("G5", "S16", "結案", "觀察期無重大事件、As-Built 交付、客戶簽核", "PM", False),
 ]
 
 OPEN_ITEMS = [
@@ -333,6 +333,7 @@ DOCS = [
     ("Release", "VMware Cloud Foundation 9.1.1.0 Release Notes", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/release-notes/vmware-cloud-foundation-9-1-1-0-release-notes.html"),
     ("Release", "VMware Cloud Foundation 9.1.1.0 Bill of Materials", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/release-notes/vmware-cloud-foundation-9-1-1-0-release-notes/vmware-cloud-foundation-9-1-1-0-bill-of-material.html"),
     ("Interop", "Broadcom Product Interoperability Matrix", "https://interopmatrix.broadcom.com/Interoperability"),
+    ("vSAN", "Upgrade vSAN On-Disk Format Versions（本案不執行）", "https://techdocs.broadcom.com/us/en/vmware-cis/vcf/vcf-9-0-and-later/9-1/deployment/upgrading-cloud-foundation/upgrade-the-management-domain-to-vmware-cloud-foundation-5-2/upgrade-vsan-on-disk-format-versions.html"),
 ]
 
 KBS = [

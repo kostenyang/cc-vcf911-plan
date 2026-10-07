@@ -32,6 +32,7 @@ python3 scripts/build_xlsx.py      # → out/CTBC_VCF911_每步Checklist.xlsx
 - vRA / Aria Operations 冷遷移（vDS 版本不同，KB 318582）；目標 port group 與 vRA 同 L2
 - Offline Depot 建議架（Installer 內 binaries 不會轉給 Software Depot）
 - 三套 vCenter 無 ELM（客戶 10/7 確認）
+- vSAN on-disk format 不升（客戶 10/7 決定）：PONR 只剩 Converge 與兩次 Import；S16 改為觀察期與收尾
 
 ## Lab 驗證缺口（正式前補測）
 
