@@ -9,7 +9,7 @@ Management Cluster Converge 成 VCF 9.1.1 管理網域 → vRA 8.18 import / 升
 | 檔案 | 內容 |
 |---|---|
 | `CTBC_VCF911_Converge_Import_Plan.pptx` | 31 頁：原 13 步檢視、方案 A/B 決策、建議流程（17 步 / Gate / PONR）、Lab 驗證覆蓋、每步 Pre-check / Execute / Verify / Rollback、待確認、IP/DNS、官方依據 |
-| `CTBC_VCF911_每步Checklist.xlsx` | 181 項逐步 checklist（狀態下拉、進度總覽自動統計）、原計畫對照、Gate 簽核、IP & DNS 規劃、待確認事項、官方文件、Lab 驗證覆蓋、Git 參考文件 |
+| `CTBC_VCF911_每步Checklist.xlsx` | 202 項逐步 checklist（狀態下拉、進度總覽自動統計）、原計畫對照、Gate 簽核、IP & DNS 規劃、待確認事項、官方文件、Lab 驗證覆蓋、Git 參考文件 |
 
 ## 怎麼改
 
